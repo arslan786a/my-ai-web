@@ -24,7 +24,6 @@
 <body>
   <h1>Multi-AI Script Generator</h1>
   <button id="generateBtn">Generate Script</button>
-
   <div id="logConsole"></div>
   <div id="root"></div>
 
@@ -35,109 +34,90 @@
 
   <!-- Inline main.jsx + App.jsx -->
   <script type="text/babel">
+    // App.jsx
+    const { useState, useEffect } = React;
 
-  // App.jsx
-  const { useState, useEffect } = React;
-  function App({ logFn }) {
-    const [requirement, setRequirement] = useState("");
-    const [finalScript, setFinalScript] = useState("");
-    const [loading, setLoading] = useState(false);
+    function App({ logFn }) {
+      const [requirement, setRequirement] = useState("");
+      const [finalScript, setFinalScript] = useState("");
+      const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-      logFn("App.jsx mounted");
-    }, []);
+      useEffect(() => { logFn("App.jsx mounted"); }, []);
 
-    const generateScript = async () => {
-      logFn("Generate script called with requirement: " + requirement);
-      setLoading(true);
-      setFinalScript("");
+      const generateScript = async () => {
+        logFn("Generate script called with requirement: " + requirement);
+        setLoading(true);
+        setFinalScript("");
 
-      try {
-        // Simulated API call (replace with real API)
-        const data = { ok: true, finalScript: "// Generated script for: " + requirement };
-        logFn("API response: " + JSON.stringify(data));
-
-        if (data.ok) {
-          setFinalScript(data.finalScript);
+        const apiList = ["chatgpt","deepseek","gemini","grok","qwen","calude","meta"];
+        try {
+          const results = [];
+          for(const api of apiList){
+            logFn(`Calling API: ${api}...`);
+            const res = await fetch(`https://ai-api-phi-seven.vercel.app/api/${api}?message=${encodeURIComponent(requirement)}`);
+            const data = await res.json();
+            logFn(`Response from ${api}: ${JSON.stringify(data)}`);
+            if(data.success) results.push(data.msg);
+          }
+          const final = results.join("\n\n// --- Next API ---\n\n");
+          setFinalScript(final);
           logFn("Final script updated");
 
-          setTimeout(() => {
-            logFn("Redirecting to next page...");
-            alert("Redirecting..."); // for demo
-            // window.location.href = "/next.html"; // uncomment for real redirect
-          }, 2000);
-        } else {
-          logFn("Error generating script: " + (data.error || "Unknown error"));
-          alert("Error generating script");
-        }
-      } catch (e) {
-        logFn("Fetch error: " + e);
-        alert("Server error");
-      } finally {
-        setLoading(false);
-      }
+          setTimeout(()=>{logFn("Redirecting to next page..."); /* window.location.href="/next.html"; */ },2000);
+
+        } catch(e){
+          logFn("Error in generateScript: " + e);
+        } finally { setLoading(false); }
+      };
+
+      const copyToClipboard = () => {
+        navigator.clipboard.writeText(finalScript);
+        logFn("Script copied to clipboard");
+        alert("Script copied!");
+      };
+
+      return (
+        <div>
+          <textarea
+            rows={6}
+            placeholder="Enter your requirement here..."
+            value={requirement}
+            onChange={(e)=>{setRequirement(e.target.value); logFn("Requirement changed: " + e.target.value);}}
+          />
+          <button onClick={generateScript} disabled={loading}>{loading ? "Generating..." : "Generate Script"}</button>
+          {finalScript && (
+            <div style={{ marginTop:20 }}>
+              <h3>Final Script:</h3>
+              <pre>{finalScript}</pre>
+              <button onClick={copyToClipboard}>Copy Script</button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // main.jsx
+    window.callMain = function(logFn){
+      logFn("main.jsx picked the call.");
+      logFn("Calling App.jsx...");
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(<App logFn={logFn} />);
+      logFn("main.jsx finished calling App.jsx.");
     };
-
-    const copyToClipboard = () => {
-      navigator.clipboard.writeText(finalScript);
-      logFn("Script copied to clipboard");
-      alert("Script copied!");
-    };
-
-    return (
-      <div>
-        <textarea
-          rows={6}
-          placeholder="Enter your requirement here..."
-          value={requirement}
-          onChange={(e) => {
-            setRequirement(e.target.value);
-            logFn("Requirement changed: " + e.target.value);
-          }}
-        />
-        <button onClick={generateScript} disabled={loading}>
-          {loading ? "Generating..." : "Generate Script"}
-        </button>
-
-        {finalScript && (
-          <div style={{ marginTop: 20 }}>
-            <h3>Final Script:</h3>
-            <pre>{finalScript}</pre>
-            <button onClick={copyToClipboard}>Copy Script</button>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // main.jsx
-  window.callMain = function(logFn) {
-    logFn("main.jsx picked the call.");
-    logFn("Calling App.jsx...");
-
-    const root = ReactDOM.createRoot(document.getElementById("root"));
-    root.render(<App logFn={logFn} />);
-
-    logFn("main.jsx finished calling App.jsx.");
-  };
   </script>
 
   <script>
     // index.html button logic
     const logConsole = document.getElementById("logConsole");
-
-    function addLog(msg) {
+    function addLog(msg){
       logConsole.textContent += msg + "\n";
       logConsole.scrollTop = logConsole.scrollHeight;
     }
 
-    document.getElementById("generateBtn").addEventListener("click", () => {
+    document.getElementById("generateBtn").addEventListener("click", ()=>{
       addLog("Calling main.jsx...");
-      if (window.callMain) {
-        window.callMain(addLog);
-      } else {
-        addLog("main.jsx function not found!");
-      }
+      if(window.callMain) window.callMain(addLog);
+      else addLog("main.jsx function not found!");
     });
   </script>
 </body>
