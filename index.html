@@ -24,6 +24,7 @@
 <body>
   <h1>Multi-AI Script Generator</h1>
   <button id="generateBtn">Generate Script</button>
+
   <div id="logConsole"></div>
   <div id="root"></div>
 
@@ -34,46 +35,69 @@
 
   <!-- Inline main.jsx + App.jsx -->
   <script type="text/babel">
-    // App.jsx
     const { useState, useEffect } = React;
+
+    const AI_ENDPOINTS = {
+      chatgpt: "https://ai-api-phi-seven.vercel.app/api/chatgpt",
+      deepseek: "https://ai-api-phi-seven.vercel.app/api/deepseek",
+      gemini: "https://ai-api-phi-seven.vercel.app/api/gemini",
+      grok: "https://ai-api-phi-seven.vercel.app/api/grok",
+      qwen: "https://ai-api-phi-seven.vercel.app/api/qwen",
+      calude: "https://ai-api-phi-seven.vercel.app/api/calude",
+      meta: "https://ai-api-phi-seven.vercel.app/api/meta",
+    };
+
+    async function callAI(url, message, logFn) {
+      logFn?.(`Calling AI endpoint: ${url} with message: "${message}"`);
+      const res = await fetch(`${url}?message=${encodeURIComponent(message)}`);
+      const data = await res.json();
+      logFn?.(`Response from ${url}: ${JSON.stringify(data)}`);
+      return { success: data.success, msg: data.msg };
+    }
 
     function App({ logFn }) {
       const [requirement, setRequirement] = useState("");
       const [finalScript, setFinalScript] = useState("");
       const [loading, setLoading] = useState(false);
 
-      useEffect(() => { logFn("App.jsx mounted"); }, []);
+      useEffect(() => {
+        logFn?.("App.jsx mounted");
+      }, []);
 
       const generateScript = async () => {
-        logFn("Generate script called with requirement: " + requirement);
+        logFn?.("Generate script called with requirement: " + requirement);
         setLoading(true);
         setFinalScript("");
 
-        const apiList = ["chatgpt","deepseek","gemini","grok","qwen","calude","meta"];
         try {
-          const results = [];
-          for(const api of apiList){
-            logFn(`Calling API: ${api}...`);
-            const res = await fetch(`https://ai-api-phi-seven.vercel.app/api/${api}?message=${encodeURIComponent(requirement)}`);
-            const data = await res.json();
-            logFn(`Response from ${api}: ${JSON.stringify(data)}`);
-            if(data.success) results.push(data.msg);
-          }
-          const final = results.join("\n\n// --- Next API ---\n\n");
-          setFinalScript(final);
-          logFn("Final script updated");
+          const aiResponses = await Promise.all(
+            Object.values(AI_ENDPOINTS).map((url) => callAI(url, requirement, logFn))
+          );
 
-          setTimeout(()=>{logFn("Redirecting to next page..."); /* window.location.href="/next.html"; */ },2000);
+          logFn?.("All AI responses collected");
 
-        } catch(e){
-          logFn("Error in generateScript: " + e);
-        } finally { setLoading(false); }
+          const aggregatedInput = aiResponses.map((r, i) => `AI${i + 1}: ${r.msg}`).join("\n");
+
+          const finalRes = await callAI(AI_ENDPOINTS.chatgpt, aggregatedInput, logFn);
+
+          setFinalScript(finalRes.msg);
+          logFn?.("Final script updated");
+
+          setTimeout(() => {
+            logFn?.("Redirecting to next page...");
+            window.location.href = "/next.html"; // change as needed
+          }, 2000);
+        } catch (err) {
+          logFn?.("Error in generateScript: " + err);
+          alert("Error generating script");
+        } finally {
+          setLoading(false);
+        }
       };
 
       const copyToClipboard = () => {
         navigator.clipboard.writeText(finalScript);
-        logFn("Script copied to clipboard");
-        alert("Script copied!");
+        logFn?.("Script copied to clipboard");
       };
 
       return (
@@ -82,11 +106,17 @@
             rows={6}
             placeholder="Enter your requirement here..."
             value={requirement}
-            onChange={(e)=>{setRequirement(e.target.value); logFn("Requirement changed: " + e.target.value);}}
+            onChange={(e) => {
+              setRequirement(e.target.value);
+              logFn?.("Requirement changed: " + e.target.value);
+            }}
           />
-          <button onClick={generateScript} disabled={loading}>{loading ? "Generating..." : "Generate Script"}</button>
+          <button onClick={generateScript} disabled={loading || !requirement.trim()}>
+            {loading ? "Generating..." : "Generate Script"}
+          </button>
+
           {finalScript && (
-            <div style={{ marginTop:20 }}>
+            <div style={{ marginTop: 20 }}>
               <h3>Final Script:</h3>
               <pre>{finalScript}</pre>
               <button onClick={copyToClipboard}>Copy Script</button>
@@ -96,28 +126,32 @@
       );
     }
 
-    // main.jsx
-    window.callMain = function(logFn){
-      logFn("main.jsx picked the call.");
-      logFn("Calling App.jsx...");
+    window.callMain = function(logFn) {
+      logFn?.("main.jsx picked the call.");
+      logFn?.("Calling App.jsx...");
+
       const root = ReactDOM.createRoot(document.getElementById("root"));
       root.render(<App logFn={logFn} />);
-      logFn("main.jsx finished calling App.jsx.");
+
+      logFn?.("main.jsx finished calling App.jsx.");
     };
   </script>
 
   <script>
-    // index.html button logic
     const logConsole = document.getElementById("logConsole");
-    function addLog(msg){
+
+    function addLog(msg) {
       logConsole.textContent += msg + "\n";
       logConsole.scrollTop = logConsole.scrollHeight;
     }
 
-    document.getElementById("generateBtn").addEventListener("click", ()=>{
+    document.getElementById("generateBtn").addEventListener("click", () => {
       addLog("Calling main.jsx...");
-      if(window.callMain) window.callMain(addLog);
-      else addLog("main.jsx function not found!");
+      if (window.callMain) {
+        window.callMain(addLog);
+      } else {
+        addLog("main.jsx function not found!");
+      }
     });
   </script>
 </body>
