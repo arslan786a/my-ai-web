@@ -4,7 +4,6 @@ export default function App({ logFn }) {
   const [requirement, setRequirement] = useState("");
   const [finalScript, setFinalScript] = useState("");
   const [loading, setLoading] = useState(false);
-  const [readyToRedirect, setReadyToRedirect] = useState(false);
 
   useEffect(() => {
     if (logFn) logFn("App.jsx mounted");
@@ -17,6 +16,7 @@ export default function App({ logFn }) {
     setFinalScript("");
 
     try {
+      // Replace this with your real API
       const res = await fetch("/api/generate-script", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -26,18 +26,26 @@ export default function App({ logFn }) {
       const data = await res.json();
 
       if (logFn) logFn("API response: " + JSON.stringify(data));
+      else console.log("API response:", data);
+
       if (data.ok) {
         setFinalScript(data.finalScript);
         if (logFn) logFn("Final script updated");
-        setReadyToRedirect(true); // show OK button
+
+        // Automatic redirect after 2 seconds
+        setTimeout(() => {
+          if (logFn) logFn("Redirecting to next page...");
+          window.location.href = "/next.html"; // Change to your next page
+        }, 2000);
+
       } else {
         const errorMsg = data.error || "Unknown error";
         if (logFn) logFn("Error generating script: " + errorMsg);
-        alert("Error generating script");
+        else console.error("Error generating script:", errorMsg);
       }
     } catch (e) {
       if (logFn) logFn("Fetch error: " + e);
-      alert("Server error");
+      else console.error("Fetch error:", e);
     } finally {
       setLoading(false);
     }
@@ -46,12 +54,7 @@ export default function App({ logFn }) {
   const copyToClipboard = () => {
     navigator.clipboard.writeText(finalScript);
     if (logFn) logFn("Script copied to clipboard");
-    alert("Script copied!");
-  };
-
-  const handleRedirect = () => {
-    if (logFn) logFn("Redirecting to next page...");
-    window.location.href = "/next.html"; // change to your next page
+    else console.log("Script copied to clipboard");
   };
 
   return (
@@ -90,16 +93,11 @@ export default function App({ logFn }) {
           >
             {finalScript}
           </pre>
-          <button onClick={copyToClipboard} style={{ marginTop: 10, padding: "5px 15px" }}>
+          <button
+            onClick={copyToClipboard}
+            style={{ marginTop: 10, padding: "5px 15px" }}
+          >
             Copy Script
-          </button>
-        </div>
-      )}
-
-      {readyToRedirect && (
-        <div style={{ marginTop: 20 }}>
-          <button onClick={handleRedirect} style={{ padding: "10px 20px", fontSize: 16 }}>
-            OK, go to next page
           </button>
         </div>
       )}
