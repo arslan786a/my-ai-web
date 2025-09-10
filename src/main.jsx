@@ -2,18 +2,14 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 
-// Expose a function to be called from index.html
-window.callMain = function () {
-  console.log("main.jsx function called from index.html button");
+// callMain now receives log function from index.html
+window.callMain = function(logFn) {
+  logFn("main.jsx picked the call.");
+
+  logFn("Calling App.jsx...");
 
   const root = ReactDOM.createRoot(document.getElementById("root"));
-  root.render(<App />);
+  root.render(<App logFn={logFn}/>);
 
-  console.log("App.jsx rendered by main.jsx");
-
-  // Optional: redirect after 2 seconds
-  setTimeout(() => {
-    console.log("Redirecting to next page...");
-    window.location.href = "next.html"; // change to your next page
-  }, 2000);
+  logFn("main.jsx finished calling App.jsx.");
 };

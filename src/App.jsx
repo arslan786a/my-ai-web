@@ -1,22 +1,24 @@
 import { useState, useEffect } from "react";
 
-export default function App() {
+export default function App({ logFn }) {
   const [requirement, setRequirement] = useState("");
   const [finalScript, setFinalScript] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Lifecycle log
   useEffect(() => {
-    console.log("App.jsx mounted");
+    if (logFn) logFn("App.jsx mounted");
+    else console.log("App.jsx mounted");
   }, []);
 
   const generateScript = async () => {
-    console.log("Generate script called with requirement:", requirement);
+    if (logFn) logFn("Generate script called with requirement: " + requirement);
+    else console.log("Generate script called with requirement:", requirement);
+
     setLoading(true);
     setFinalScript("");
 
     try {
-      // Simulate API call (replace with real API)
+      // API call simulation (replace with real endpoint)
       const res = await fetch("/api/generate-script", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -24,23 +26,30 @@ export default function App() {
       });
 
       const data = await res.json();
-      console.log("API response:", data);
+
+      if (logFn) logFn("API response: " + JSON.stringify(data));
+      else console.log("API response:", data);
 
       if (data.ok) {
         setFinalScript(data.finalScript);
-        console.log("Final script updated");
+        if (logFn) logFn("Final script updated");
+        else console.log("Final script updated");
 
-        // Redirect after 2 seconds (optional)
+        // Redirect after 2 seconds
         setTimeout(() => {
-          console.log("Redirecting to next page...");
-          window.location.href = "/next.html"; // change to your next page
+          if (logFn) logFn("Redirecting to next page...");
+          else console.log("Redirecting to next page...");
+          window.location.href = "/next.html"; // change as needed
         }, 2000);
       } else {
-        console.error("Error generating script:", data.error);
+        const errorMsg = data.error || "Unknown error";
+        if (logFn) logFn("Error generating script: " + errorMsg);
+        else console.error("Error generating script:", errorMsg);
         alert("Error generating script");
       }
     } catch (e) {
-      console.error("Fetch error:", e);
+      if (logFn) logFn("Fetch error: " + e);
+      else console.error("Fetch error:", e);
       alert("Server error");
     } finally {
       setLoading(false);
@@ -49,7 +58,8 @@ export default function App() {
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(finalScript);
-    console.log("Script copied to clipboard");
+    if (logFn) logFn("Script copied to clipboard");
+    else console.log("Script copied to clipboard");
     alert("Script copied!");
   };
 
@@ -64,7 +74,8 @@ export default function App() {
         value={requirement}
         onChange={(e) => {
           setRequirement(e.target.value);
-          console.log("Requirement changed:", e.target.value);
+          if (logFn) logFn("Requirement changed: " + e.target.value);
+          else console.log("Requirement changed:", e.target.value);
         }}
       />
 
