@@ -1,24 +1,39 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function App() {
   const [requirement, setRequirement] = useState("");
   const [finalScript, setFinalScript] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Lifecycle log
+  useEffect(() => {
+    console.log("App component mounted");
+  }, []);
+
   const generateScript = async () => {
+    console.log("Generate script called with requirement:", requirement);
     setLoading(true);
     setFinalScript("");
+
     try {
       const res = await fetch("/api/generate-script", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ requirement }),
       });
+
       const data = await res.json();
-      if (data.ok) setFinalScript(data.finalScript);
-      else alert("Error generating script");
+      console.log("API response:", data);
+
+      if (data.ok) {
+        setFinalScript(data.finalScript);
+        console.log("Final script updated");
+      } else {
+        console.error("Error generating script:", data.error);
+        alert("Error generating script");
+      }
     } catch (e) {
-      console.error(e);
+      console.error("Fetch error:", e);
       alert("Server error");
     } finally {
       setLoading(false);
@@ -27,19 +42,25 @@ export default function App() {
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(finalScript);
+    console.log("Script copied to clipboard");
     alert("Script copied!");
   };
 
   return (
     <div style={{ maxWidth: 800, margin: "50px auto", fontFamily: "Arial" }}>
       <h1>Multi-AI Script Generator</h1>
+
       <textarea
         rows={6}
         style={{ width: "100%", fontFamily: "monospace", fontSize: 16 }}
         placeholder="Enter your requirement here..."
         value={requirement}
-        onChange={(e) => setRequirement(e.target.value)}
+        onChange={(e) => {
+          setRequirement(e.target.value);
+          console.log("Requirement changed:", e.target.value);
+        }}
       />
+
       <button
         onClick={generateScript}
         style={{ marginTop: 10, padding: "10px 20px", fontSize: 16 }}
