@@ -19,10 +19,12 @@ export default function App({ logFn }) {
     logFn?.("App.jsx mounted");
   }, []);
 
+  // Function to call individual AI endpoint
   const callAI = async (url, message) => {
     logFn?.(`Calling AI endpoint: ${url} with message: "${message}"`);
     try {
       const res = await fetch(`${url}?message=${encodeURIComponent(message)}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       logFn?.(`Response from ${url}: ${JSON.stringify(data)}`);
       return data;
@@ -32,6 +34,7 @@ export default function App({ logFn }) {
     }
   };
 
+  // Main generate function
   const generateScript = async () => {
     if (!requirement.trim()) return;
     logFn?.("Generate script called with requirement: " + requirement);
@@ -40,23 +43,27 @@ export default function App({ logFn }) {
     setFinalScript("");
 
     try {
+      // Call all AI endpoints in parallel
       const aiResponses = await Promise.all(
         Object.values(AI_ENDPOINTS).map((url) => callAI(url, requirement))
       );
 
       logFn?.("All AI responses collected");
 
-      const aggregatedInput = aiResponses.map((r, i) => `AI${i + 1}: ${r.msg}`).join("\n");
+      // Aggregate responses for final ChatGPT call
+      const aggregatedInput = aiResponses
+        .map((r, i) => `AI${i + 1}: ${r.msg}`)
+        .join("\n");
 
       const finalRes = await callAI(AI_ENDPOINTS.chatgpt, aggregatedInput);
 
       setFinalScript(finalRes.msg);
       logFn?.("Final script updated");
 
-      // Auto redirect without alert
+      // Auto redirect after 2 seconds
       setTimeout(() => {
         logFn?.("Redirecting to next page...");
-        window.location.href = "/next.html"; // change as needed
+        window.location.href = "/next.html"; // Change path as needed
       }, 2000);
     } catch (err) {
       logFn?.("Error in generateScript: " + err);
@@ -73,6 +80,7 @@ export default function App({ logFn }) {
   return (
     <div style={{ maxWidth: 800, margin: "50px auto", fontFamily: "Arial" }}>
       <h1>Multi-AI Script Generator</h1>
+
       <textarea
         rows={6}
         style={{ width: "100%", fontFamily: "monospace", fontSize: 16 }}
@@ -83,6 +91,7 @@ export default function App({ logFn }) {
           logFn?.("Requirement changed: " + e.target.value);
         }}
       />
+
       <button
         onClick={generateScript}
         style={{ marginTop: 10, padding: "10px 20px", fontSize: 16 }}
