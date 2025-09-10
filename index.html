@@ -5,20 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Multi-AI Script Generator</title>
   <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
     #logConsole {
       margin-top: 20px;
       height: 200px;
       overflow-y: auto;
       background: #f0f0f0;
       padding: 10px;
-      font-family: monospace;
       border: 1px solid #ccc;
       white-space: pre-wrap;
+      font-family: monospace;
     }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-    }
+    button { padding: 10px 20px; font-size: 16px; margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -28,11 +26,12 @@
   <div id="logConsole"></div>
   <div id="root"></div>
 
-  <!-- React + ReactDOM + Babel CDN -->
+  <!-- React + ReactDOM + Babel -->
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+  <!-- Load main.jsx first -->
   <script type="text/babel" src="src/main.jsx"></script>
 
   <script>
