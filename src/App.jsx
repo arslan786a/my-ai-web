@@ -7,7 +7,7 @@ export default function App() {
 
   // Lifecycle log
   useEffect(() => {
-    console.log("App component mounted");
+    console.log("App.jsx mounted");
   }, []);
 
   const generateScript = async () => {
@@ -16,6 +16,7 @@ export default function App() {
     setFinalScript("");
 
     try {
+      // Simulate API call (replace with real API)
       const res = await fetch("/api/generate-script", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -28,6 +29,12 @@ export default function App() {
       if (data.ok) {
         setFinalScript(data.finalScript);
         console.log("Final script updated");
+
+        // Redirect after 2 seconds (optional)
+        setTimeout(() => {
+          console.log("Redirecting to next page...");
+          window.location.href = "/next.html"; // change to your next page
+        }, 2000);
       } else {
         console.error("Error generating script:", data.error);
         alert("Error generating script");
