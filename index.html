@@ -3,45 +3,32 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Multi-AI Script Generator</title>
+  <title>Multi-AI Generator</title>
 </head>
 <body>
+  <h1>Multi-AI Script Generator</h1>
+  <button id="generateBtn">Generate Script</button>
+
   <div id="root"></div>
 
-  <!-- React & Babel CDN -->
+  <!-- React + ReactDOM + Babel CDN -->
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <script type="text/babel">
-    function App() {
-      const [req, setReq] = React.useState("");
+  <!-- main.jsx script -->
+  <script type="text/babel" src="src/main.jsx"></script>
 
-      React.useEffect(() => {
-        console.log("App mounted");
-      }, []);
-
-      return (
-        <div style={{padding: 20, fontFamily: "Arial"}}>
-          <h1>Multi-AI Script Generator</h1>
-          <textarea
-            value={req}
-            onChange={(e) => {
-              setReq(e.target.value);
-              console.log("Requirement changed:", e.target.value);
-            }}
-            placeholder="Enter requirement"
-            rows={5}
-            style={{width:"100%", fontSize:16}}
-          />
-          <button onClick={() => console.log("Generate clicked with:", req)}>Generate Script</button>
-        </div>
-      );
-    }
-
-    const root = ReactDOM.createRoot(document.getElementById("root"));
-    root.render(<App />);
-    console.log("React render called");
+  <script>
+    // Button click call main.jsx
+    document.getElementById("generateBtn").addEventListener("click", () => {
+      console.log("Generate button clicked, calling main.jsx function");
+      if (window.callMain) {
+        window.callMain();  // main.jsx exposes this function
+      } else {
+        console.error("main.jsx function not found!");
+      }
+    });
   </script>
 </body>
 </html>
