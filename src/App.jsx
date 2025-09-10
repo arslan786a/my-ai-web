@@ -1,51 +1,63 @@
 import { useState, useEffect } from "react";
 
+const AI_ENDPOINTS = {
+  chatgpt: "https://ai-api-phi-seven.vercel.app/api/chatgpt",
+  deepseek: "https://ai-api-phi-seven.vercel.app/api/deepseek",
+  gemini: "https://ai-api-phi-seven.vercel.app/api/gemini",
+  grok: "https://ai-api-phi-seven.vercel.app/api/grok",
+  qwen: "https://ai-api-phi-seven.vercel.app/api/qwen",
+  calude: "https://ai-api-phi-seven.vercel.app/api/calude",
+  meta: "https://ai-api-phi-seven.vercel.app/api/meta",
+};
+
+// Individual AI call (GET)
+async function callAI(url, message, logFn) {
+  logFn?.(`Calling AI endpoint: ${url} with message: "${message}"`);
+  const res = await fetch(`${url}?message=${encodeURIComponent(message)}`);
+  const data = await res.json();
+  logFn?.(`Response from ${url}: ${JSON.stringify(data)}`);
+  return { success: data.success, msg: data.msg };
+}
+
 export default function App({ logFn }) {
   const [requirement, setRequirement] = useState("");
   const [finalScript, setFinalScript] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (logFn) logFn("App.jsx mounted");
-    else console.log("App.jsx mounted");
+    logFn?.("App.jsx mounted");
   }, []);
 
   const generateScript = async () => {
-    if (logFn) logFn("Generate script called with requirement: " + requirement);
+    logFn?.("Generate script called with requirement: " + requirement);
     setLoading(true);
     setFinalScript("");
 
     try {
-      // Replace this with your real API
-      const res = await fetch("/api/generate-script", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requirement }),
-      });
+      // Call all AI endpoints in parallel
+      const aiResponses = await Promise.all(
+        Object.values(AI_ENDPOINTS).map((url) => callAI(url, requirement, logFn))
+      );
 
-      const data = await res.json();
+      logFn?.("All AI responses collected");
 
-      if (logFn) logFn("API response: " + JSON.stringify(data));
-      else console.log("API response:", data);
+      // Aggregate responses for final script
+      const aggregatedInput = aiResponses.map((r, i) => `AI${i + 1}: ${r.msg}`).join("\n");
 
-      if (data.ok) {
-        setFinalScript(data.finalScript);
-        if (logFn) logFn("Final script updated");
+      // Final AI call (e.g., ChatGPT) to generate script
+      const finalRes = await callAI(AI_ENDPOINTS.chatgpt, aggregatedInput, logFn);
 
-        // Automatic redirect after 2 seconds
-        setTimeout(() => {
-          if (logFn) logFn("Redirecting to next page...");
-          window.location.href = "/next.html"; // Change to your next page
-        }, 2000);
+      setFinalScript(finalRes.msg);
+      logFn?.("Final script updated");
 
-      } else {
-        const errorMsg = data.error || "Unknown error";
-        if (logFn) logFn("Error generating script: " + errorMsg);
-        else console.error("Error generating script:", errorMsg);
-      }
-    } catch (e) {
-      if (logFn) logFn("Fetch error: " + e);
-      else console.error("Fetch error:", e);
+      // Auto redirect after 2 seconds
+      setTimeout(() => {
+        logFn?.("Redirecting to next page...");
+        window.location.href = "/next.html"; // change as needed
+      }, 2000);
+    } catch (err) {
+      logFn?.("Error in generateScript: " + err);
+      alert("Error generating script");
     } finally {
       setLoading(false);
     }
@@ -53,8 +65,8 @@ export default function App({ logFn }) {
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(finalScript);
-    if (logFn) logFn("Script copied to clipboard");
-    else console.log("Script copied to clipboard");
+    logFn?.("Script copied to clipboard");
+    alert("Script copied!");
   };
 
   return (
@@ -68,14 +80,14 @@ export default function App({ logFn }) {
         value={requirement}
         onChange={(e) => {
           setRequirement(e.target.value);
-          if (logFn) logFn("Requirement changed: " + e.target.value);
+          logFn?.("Requirement changed: " + e.target.value);
         }}
       />
 
       <button
         onClick={generateScript}
         style={{ marginTop: 10, padding: "10px 20px", fontSize: 16 }}
-        disabled={loading}
+        disabled={loading || !requirement.trim()}
       >
         {loading ? "Generating..." : "Generate Script"}
       </button>
